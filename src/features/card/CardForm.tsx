@@ -1,12 +1,15 @@
-import React, { FC, useRef, useState } from 'react';
+import React, { FC, useCallback, useRef, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import * as yup from 'yup';
-import { CardType } from '../../types/Card';
+import {Card, CardType} from '../../types/Card';
 import styles from './Card.module.css';
+import { useAppDispatch } from '../../app/hooks';
+import { addCard } from './cardSlice';
 
 const CardForm: FC = () => {
   const inputRefs = useRef([]);
   const [cardType, setCardType] = useState<CardType>(null);
+  const dispatch = useAppDispatch();
 
   const schema = yup.object().shape({
     number: yup
@@ -14,7 +17,6 @@ const CardForm: FC = () => {
       .test({
         name: 'typeValidation',
         test: (v: string[]) => {
-          // For now works only with Visa or Mastercard
           const length = v.join('').length;
           if (cardType === CardType.visa) {
             return length === 13 || length === 16;
@@ -22,7 +24,8 @@ const CardForm: FC = () => {
           if (cardType === CardType.mastercard) {
             return length === 16;
           }
-          return false;
+          // Card number validation is simplified a bit
+          return length === 16;
         },
         message: 'Card number is invalid',
       })
@@ -131,18 +134,29 @@ const CardForm: FC = () => {
     }
   };
 
-  // const onSubmit = ({values, formikHelpers}: {values: any, formikHelpers: FormikHelpers<any>}) => {
-  //   console.log("submit!", values);
-  // }
+  const handleSubmit = useCallback(
+    async (values: Record<string, any>, { resetForm, setErrors, setStatus, setSubmitting }) => {
+      try {
+        await dispatch(addCard({...values, number: values.number.join(""), type: cardType} as Card));
+        resetForm();
+        setStatus({ success: true });
+        setSubmitting(false);
+      } catch (e) {
+        console.log("------------", e);
+        const message = e.message || 'Something went wrong';
+        setStatus({ success: false });
+        setErrors({ submit: message });
+        setSubmitting(false);
+      }
+    },
+    [dispatch, cardType]
+  );
 
   return (
     <div className={styles.formWrapper}>
       <Formik
         initialValues={initialValues}
-        onSubmit={(values, formikBag) => {
-          console.log('submit', JSON.stringify(values, null, 2));
-          formikBag.resetForm();
-        }}
+        onSubmit={handleSubmit}
         validationSchema={schema}
         // validateOnChange={false}
         // validateOnBlur={false}

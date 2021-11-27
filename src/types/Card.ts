@@ -2,7 +2,7 @@ export type Card = {
   number: string;
   holder: string;
   cvv: number;
-  expDate: Date;
+  expDate: string;
   name?: string;
   type: CardType
 };
