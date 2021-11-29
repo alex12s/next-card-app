@@ -1,10 +1,12 @@
 import React, { FC, useCallback, useRef, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import * as yup from 'yup';
-import {Card, CardType} from '../../types/Card';
-import styles from './Card.module.css';
+import { Card, CardType } from '../../types/Card';
+import styles from './Card.module.scss';
 import { useAppDispatch } from '../../app/hooks';
 import { addCard } from './cardSlice';
+import PrettyCard from '../../app/components/PrettyCard';
+import { expDateSlashHandler } from '../../app/utils';
 
 const CardForm: FC = () => {
   const inputRefs = useRef([]);
@@ -86,7 +88,7 @@ const CardForm: FC = () => {
     }
   };
 
-  const onNumberGroupChange = (i: number, setFieldValue, formValue) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNumberGroupChange = (i: number, setFieldValue, formValue) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^\d]/g, '').substring(0, 4);
 
     const updatedValue = [...formValue];
@@ -109,7 +111,14 @@ const CardForm: FC = () => {
     }
   };
 
-  const onNumberGroupBackspace = (i: number, formValue) => (e: React.KeyboardEvent) => {
+  const handleExpDateChange = (setFieldValue, formValue) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+
+    const value = expDateSlashHandler(newValue, formValue);
+    setFieldValue('expDate', value);
+  };
+
+  const handleNumberGroupBackspace = (i: number, formValue) => (e: React.KeyboardEvent) => {
     if (e.key === 'Backspace') {
       const prev = inputRefs.current[i - 1];
 
@@ -137,12 +146,12 @@ const CardForm: FC = () => {
   const handleSubmit = useCallback(
     async (values: Record<string, any>, { resetForm, setErrors, setStatus, setSubmitting }) => {
       try {
-        await dispatch(addCard({...values, number: values.number.join(""), type: cardType} as Card));
+        await dispatch(addCard({ ...values, number: values.number.join(''), type: cardType } as Card));
         resetForm();
         setStatus({ success: true });
         setSubmitting(false);
+        setCardType(null);
       } catch (e) {
-        console.log("------------", e);
         const message = e.message || 'Something went wrong';
         setStatus({ success: false });
         setErrors({ submit: message });
@@ -153,20 +162,35 @@ const CardForm: FC = () => {
   );
 
   return (
-    <div className={styles.formWrapper}>
-      <Formik
-        initialValues={initialValues}
-        onSubmit={handleSubmit}
-        validationSchema={schema}
-        // validateOnChange={false}
-        // validateOnBlur={false}
-      >
+    <div className="d-flex justify-content-center">
+      <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={schema}>
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, values, setFieldValue, isValid }) => (
           <Form>
-            <div className={`${styles.creditCard} ${styles.creditCardFrontSide}`}>
-              <Field name="number" /*validate={validateEmail}*/>
-                {({ field: { name, value, onChange, onBlur }, form: { touched, errors, setFieldValue } }) => (
-                  <div className="mb-4 position-relative">
+            <PrettyCard
+              backsideContent={
+                <Field name="cvv">
+                  {({ field, form: { touched, errors } }) => (
+                    <div className={`mb-3 ${styles.cvvGroup}`}>
+                      <label htmlFor="cvv" className="form-label form-label-sm">
+                        CVV*
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        id="cvv"
+                        placeholder=""
+                        maxLength="3"
+                        {...field}
+                      />
+                      {errors.cvv && touched.cvv && <div className={styles.error}>{errors.cvv}</div>}
+                    </div>
+                  )}
+                </Field>
+              }
+            >
+              <Field name="number">
+                {({ field: { value, onBlur }, form: { touched, errors, setFieldValue } }) => (
+                  <div className="mb-3 position-relative">
                     <label htmlFor="number0" className="form-label form-label-sm">
                       Card Number*
                     </label>
@@ -182,8 +206,8 @@ const CardForm: FC = () => {
                             maxLength={4}
                             value={v}
                             onBlur={onBlur}
-                            onChange={onNumberGroupChange(i, setFieldValue, value)}
-                            onKeyDown={onNumberGroupBackspace(i, value)}
+                            onChange={handleNumberGroupChange(i, setFieldValue, value)}
+                            onKeyDown={handleNumberGroupBackspace(i, value)}
                             // onPaste={onNumberGroupPaste(i, setFieldValue, value)}
                             ref={(el) => (inputRefs.current[i] = el)}
                           />
@@ -196,9 +220,9 @@ const CardForm: FC = () => {
                 )}
               </Field>
               <Field name="expDate">
-                {({ field, form: { touched, errors } }) => (
+                {({ field: { value, onBlur }, form: { touched, errors, setFieldValue } }) => (
                   <div className="row">
-                    <div className="mb-4 col-5 position-relative">
+                    <div className="mb-3 col-6 position-relative">
                       <label htmlFor="expDate" className="form-label form-label-sm">
                         Expiration Date*
                       </label>
@@ -207,8 +231,10 @@ const CardForm: FC = () => {
                         className="form-control form-control-sm"
                         id="expDate"
                         placeholder="MM/YY"
-                        {...field}
-                        maxLength="5"
+                        value={value}
+                        onBlur={onBlur}
+                        onChange={handleExpDateChange(setFieldValue, value)}
+                        maxLength={5}
                       />
                       {errors.expDate && touched.expDate && (
                         <div className={`${styles.error} ${styles.errorPosition}`}>{errors.expDate}</div>
@@ -220,7 +246,7 @@ const CardForm: FC = () => {
               <div className="row align-items-center">
                 <Field name="holder">
                   {({ field, form: { touched, errors } }) => (
-                    <div className="mb-4 col-9 position-relative">
+                    <div className="mb-3 col-9 position-relative">
                       <label htmlFor="holder" className="form-label form-label-sm">
                         Card Holder*
                       </label>
@@ -242,46 +268,33 @@ const CardForm: FC = () => {
                   {cardType === CardType.visa && <img src="/v-logo.png" className={styles.logo} />}
                 </div>
               </div>
-            </div>
-            <div
-              className={`${styles.creditCard} ${styles.creditCardBackSide} d-flex justify-content-end align-items-baseline`}
-            >
-              <Field name="cvv">
-                {({ field, form: { touched, errors } }) => (
-                  <div className={`mb-3 ${styles.cvvGroup}`}>
-                    <label htmlFor="cvv" className="form-label form-label-sm">
-                      CVV*
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      id="cvv"
-                      placeholder=""
-                      maxLength="3"
-                      {...field}
-                    />
-                    {errors.cvv && touched.cvv && <div className={styles.error}>{errors.cvv}</div>}
-                  </div>
-                )}
-              </Field>
-            </div>
-            <div className="row">
-              <Field name="name">
-                {({ field }) => (
-                  <>
-                    <label htmlFor="name" className="form-label col-3">
-                      Card Name
-                    </label>
-                    <div className="col-6">
-                      <input type="text" className="form-control" id="name" placeholder="" {...field} />
+            </PrettyCard>
+            <div className="container-fluid mb-3">
+              <div className="row align-items-end">
+                <Field name="name">
+                  {({ field }) => (
+                    <div className="col">
+                      <label htmlFor="name" className="form-label">
+                        Card Name
+                      </label>
+                      <div className="">
+                        <input type="text" className="form-control" id="name" placeholder="" {...field} />
+                      </div>
                     </div>
-                  </>
-                )}
-              </Field>
-              <button type="submit" className="btn btn-primary col-3" disabled={!isValid || isSubmitting}>
-                Submit
-              </button>
+                  )}
+                </Field>
+                <div className="col-auto">
+                  <button type="submit" className="btn btn-primary" disabled={!isValid || isSubmitting}>
+                    Submit
+                  </button>
+                </div>
+              </div>
             </div>
+            {errors.submit && (
+              <div className="alert alert-danger" role="alert">
+                {errors.submit}
+              </div>
+            )}
           </Form>
         )}
       </Formik>

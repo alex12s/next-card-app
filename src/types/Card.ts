@@ -1,4 +1,5 @@
 export type Card = {
+  id: string;
   number: string;
   holder: string;
   cvv: number;
@@ -8,6 +9,6 @@ export type Card = {
 };
 
 export enum CardType {
-  visa = 'visa',
-  mastercard = 'mastercard',
+  visa = 'Visa',
+  mastercard = 'Mastercard',
 }

@@ -1,0 +1,28 @@
+.cvvGroup {
+    width: 100px;
+    position: relative;
+}
+
+.numberInput {
+    padding: .25rem 1rem;
+    margin-right: .25rem;
+}
+
+.error {
+    margin-top: 0.4rem;
+    font-size: 0.75em;
+    color: #dc3545;
+}
+
+.errorPosition {
+    position: absolute;
+    bottom: -1.1rem;
+}
+
+.logo {
+    width: 100%;
+}
+
+.bigFontSize {
+    font-size: 1.5rem;
+}

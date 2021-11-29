@@ -1,6 +1,7 @@
 import {useRouter} from "next/router";
+import Card from "../../features/card/Card";
 
 export default function () {
     const router = useRouter();
-    return (<div>Card {router.query.id}</div>);
+    return (<Card id={router.query.id as string}/>);
 }
