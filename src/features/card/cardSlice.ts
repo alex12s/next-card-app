@@ -25,10 +25,13 @@ export const cardSlice = createSlice({
     pushCard: (state, action: PayloadAction<Card>) => {
       state.list.push({ ...action.payload, id: uuidv4() });
     },
+    deleteCard: (state, action: PayloadAction<string>) => {
+      state.list = state.list.filter((c) => c.id !== action.payload);
+    }
   },
 });
 
-const { pushCard } = cardSlice.actions;
+const { pushCard, deleteCard } = cardSlice.actions;
 
 export const getCards = (filter: CardListFilter, sort: CardSort) => (state: AppState) => {
   const { expDateFilter, type, name } = filter;
@@ -95,3 +98,5 @@ export const addCard =
   };
 
 export default cardSlice.reducer;
+
+export {deleteCard}

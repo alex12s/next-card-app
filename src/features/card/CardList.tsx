@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
-import { useAppSelector } from '../../app/hooks';
-import { getCards } from './cardSlice';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { deleteCard, getCards } from './cardSlice';
 import { Card } from '../../types/Card';
 import Link from 'next/link';
 import { CardListFilter, CardSort } from '../../types/Filter';
@@ -10,6 +10,7 @@ const CardList: FC = () => {
   const [filter, setFilter] = useState<CardListFilter>({} as CardListFilter);
   const [sort, setSort] = useState<CardSort>(null);
   const cards: Card[] = useAppSelector(getCards(filter, sort));
+  const dispatch = useAppDispatch();
 
   const handleSortChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.value) {
@@ -17,6 +18,10 @@ const CardList: FC = () => {
     } else {
       setSort(e.target.value as CardSort);
     }
+  };
+
+  const handleDelete = (id: string) => () => {
+    dispatch(deleteCard(id));
   };
 
   return (
@@ -93,7 +98,12 @@ const CardList: FC = () => {
                   </span>
                 </div>
                 <div className="col-md-2">{card.expDate}</div>
-                <div className="col-md-4">{!!card.type && <span>{card.type}</span>}</div>
+                <div className="col-md-2">{!!card.type && <span>{card.type}</span>}</div>
+                <div className="col-md-2 d-flex justify-content-end">
+                  <button className="btn btn-danger btn-sm" onClick={handleDelete(card.id)}>
+                    Delete
+                  </button>
+                </div>
               </div>
             </li>
           ))}

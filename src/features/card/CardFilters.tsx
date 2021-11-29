@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { CardType } from '../../types/Card';
 import { CardListFilter, Comparing } from '../../types/Filter';
-import {expDateSlashHandler} from "../../app/utils";
+import { expDateSlashHandler } from '../../app/utils';
 
 const CardListFilters: FC<{ apply: (f: CardListFilter) => void }> = (props) => {
   const [type, setType] = useState<CardType>(null);
@@ -82,7 +82,14 @@ const CardListFilters: FC<{ apply: (f: CardListFilter) => void }> = (props) => {
                 Equal
               </label>
             </div>
-            <input className="form-control" id="expDate" placeholder="MM/YY" onChange={handleDateChange} value={date} />
+            <input
+              className="form-control"
+              id="expDate"
+              placeholder="MM/YY"
+              onChange={handleDateChange}
+              value={date}
+              maxLength={5}
+            />
           </div>
 
           <div className="col-md-4 col-sm-6 mb-3">
